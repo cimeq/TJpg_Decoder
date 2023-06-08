@@ -63,12 +63,12 @@ void TJpg_Decoder::setJpgScale(uint8_t scaleFactor)
 }
 
 /***************************************************************************************
-** Function name:           setCallback
-** Description:             Set the sketch callback function to render decoded blocks
+** Function name:           setScreen
+** Description:             Set the screen 
 ***************************************************************************************/
-void TJpg_Decoder::setCallback(SketchCallback sketchCallback)
+void TJpg_Decoder::setScreen(std::shared_ptr<TFT_eSPI>* tft)
 {
-  tft_output = sketchCallback;
+  tftScreen = tft;
 }
 
 /***************************************************************************************
@@ -550,4 +550,30 @@ JRESULT TJpg_Decoder::getJpgSize(uint16_t *w, uint16_t *h, const uint8_t jpeg_da
   }
 
   return jresult;
+}
+
+/**
+ * @brief Callback for printing JPEG images on the TFT screen
+ * 
+ * @param x 
+ * @param y 
+ * @param w 
+ * @param h 
+ * @param bitmap 
+ * @return true 
+ * @return false 
+ */
+bool TJpg_Decoder::tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap)
+{
+   // Stop further decoding as image is running off bottom of screen
+  if ( y >= (*tftScreen).get()->height() ) return 0;
+
+  // This function will clip the image block rendering automatically at the TFT boundaries
+  (*tftScreen).get()->pushImage(x, y, w, h, bitmap);
+
+  // This might work instead if you adapt the sketch to use the Adafruit_GFX library
+  // tft.drawRGBBitmap(x, y, bitmap, w, h);
+
+  // Return 1 to decode next block
+  return 1;
 }
